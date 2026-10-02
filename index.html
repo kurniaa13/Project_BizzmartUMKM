@@ -172,6 +172,22 @@
     border-color: var(--green-mid);
     box-shadow: 0 0 0 3px rgba(46,167,107,0.12);
   }
+  .form-input.invalid { border-color: var(--red); box-shadow: 0 0 0 3px rgba(229,57,53,0.10); }
+  .field-error { display: none; font-size: 12px; font-weight: 600; color: var(--red); margin-top: 6px; }
+  .field-error.show { display: block; }
+  .auth-link {
+    background: none; border: none; padding: 0; cursor: pointer;
+    font-family: var(--font-primary); font-size: 13px; font-weight: 600; color: var(--green);
+  }
+  .auth-link:hover { text-decoration: underline; }
+  .auth-view-title { font-family: var(--font-display); font-size: 20px; font-weight: 700; color: var(--gray-900); margin-bottom: 6px; }
+  .auth-view-desc { font-size: 13px; color: var(--gray-500); margin-bottom: 22px; line-height: 1.5; }
+  .reset-code-box {
+    background: var(--green-light); border: 1.5px dashed var(--green-mid);
+    border-radius: var(--radius-md); padding: 14px 16px; margin-bottom: 20px;
+    font-size: 13px; color: var(--gray-700); line-height: 1.5;
+  }
+  .reset-code-box strong.code { display: block; font-family: var(--font-display); font-size: 26px; letter-spacing: 6px; color: var(--green); margin: 4px 0; }
   .btn {
     display: inline-flex; align-items: center; justify-content: center; gap: 8px;
     padding: 12px 24px;
@@ -867,30 +883,84 @@
     <div id="login-form">
       <div class="form-group">
         <label class="form-label">Email</label>
-        <input type="email" class="form-input" id="login-email" placeholder="masukkan@email.com">
+        <input type="email" class="form-input" id="login-email" placeholder="email@gmail.com" oninput="clearError('login-email')">
+        <div class="field-error" id="login-email-err"></div>
       </div>
       <div class="form-group">
         <label class="form-label">Password</label>
-        <input type="password" class="form-input" id="login-password" placeholder="••••••••">
+        <input type="password" class="form-input" id="login-password" placeholder="••••••••" oninput="clearError('login-password')">
+        <div class="field-error" id="login-password-err"></div>
       </div>
-      <button class="btn btn-primary btn-full" onclick="doLogin()" style="margin-top:4px;">Masuk ke Akun</button>
+      <div style="text-align:right; margin:-6px 0 16px;">
+        <button type="button" class="auth-link" onclick="showAuthView('forgot')">Lupa password?</button>
+      </div>
+      <button class="btn btn-primary btn-full" onclick="doLogin()">Masuk ke Akun</button>
     </div>
 
     <!-- REGISTER FORM -->
     <div id="register-form" class="hidden">
       <div class="form-group">
         <label class="form-label">Nama Lengkap</label>
-        <input type="text" class="form-input" id="reg-name" placeholder="Nama lengkap">
+        <input type="text" class="form-input" id="reg-name" placeholder="Nama lengkap" oninput="clearError('reg-name')">
+        <div class="field-error" id="reg-name-err"></div>
       </div>
       <div class="form-group">
         <label class="form-label">Email</label>
-        <input type="email" class="form-input" id="reg-email" placeholder="email@contoh.com">
+        <input type="email" class="form-input" id="reg-email" placeholder="email@gmail.com" oninput="checkEmail('reg-email', true)">
+        <div class="field-error" id="reg-email-err"></div>
       </div>
       <div class="form-group">
         <label class="form-label">Password</label>
-        <input type="password" class="form-input" id="reg-password" placeholder="Min 6 karakter">
+        <input type="password" class="form-input" id="reg-password" placeholder="Min 6 karakter" oninput="checkPassword('reg-password', true)">
+        <div class="field-error" id="reg-password-err"></div>
       </div>
       <button class="btn btn-primary btn-full" onclick="doRegister()">Buat Akun</button>
+    </div>
+
+    <!-- FORGOT PASSWORD FORM -->
+    <div id="forgot-form" class="hidden">
+      <div class="auth-view-title">Lupa Password?</div>
+      <div class="auth-view-desc">Masukkan email akun Anda. Kami akan mengirimkan kode untuk mengatur ulang password.</div>
+      <div class="form-group">
+        <label class="form-label">Email</label>
+        <input type="email" class="form-input" id="forgot-email" placeholder="email@gmail.com" oninput="checkEmail('forgot-email', true)">
+        <div class="field-error" id="forgot-email-err"></div>
+      </div>
+      <button class="btn btn-primary btn-full" onclick="doForgotPassword()">Kirim Kode Reset</button>
+      <div style="text-align:center; margin-top:18px;">
+        <button type="button" class="auth-link" onclick="showAuthView('login')">← Kembali ke Masuk</button>
+      </div>
+    </div>
+
+    <!-- RESET PASSWORD FORM -->
+    <div id="reset-form" class="hidden">
+      <div class="auth-view-title">Reset Password</div>
+      <div class="auth-view-desc">Masukkan kode reset lalu buat password baru untuk akun <strong id="reset-email-label"></strong>.</div>
+      <div class="reset-code-box">
+        📧 <strong>Simulasi email</strong> — aplikasi ini belum terhubung ke server email, jadi kode ditampilkan di sini:
+        <strong class="code" id="reset-code-display">------</strong>
+        Berlaku 10 menit.
+      </div>
+      <div class="form-group">
+        <label class="form-label">Kode Reset (6 digit)</label>
+        <input type="text" class="form-input" id="reset-code" placeholder="123456" inputmode="numeric" maxlength="6" oninput="clearError('reset-code')">
+        <div class="field-error" id="reset-code-err"></div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Password Baru</label>
+        <input type="password" class="form-input" id="reset-password" placeholder="Min 6 karakter" oninput="checkPassword('reset-password', true)">
+        <div class="field-error" id="reset-password-err"></div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Konfirmasi Password Baru</label>
+        <input type="password" class="form-input" id="reset-password2" placeholder="Ulangi password baru" oninput="clearError('reset-password2')">
+        <div class="field-error" id="reset-password2-err"></div>
+      </div>
+      <button class="btn btn-primary btn-full" onclick="doResetPassword()">Simpan Password Baru</button>
+      <div style="display:flex; justify-content:space-between; margin-top:18px;">
+        <button type="button" class="auth-link" onclick="resendResetCode()">Kirim ulang kode</button>
+        <button type="button" class="auth-link" onclick="showAuthView('login')">← Kembali ke Masuk</button>
+      </div>
     </div>
   </div>
 </div>
@@ -1344,12 +1414,21 @@ let mobileNavOpen = false;
 let orderFilter = 'all';
 
 // ==================== DATA ====================
+// akun user demo dihapus, hanya admin yang tersisa
 const DEMO_USERS = [
-  { id: 1, name: 'Admin Bizmart', email: 'admin@bizmart.id', password: 'admin123', role: 'admin', joined: '1 Jan 2024' },
-  { id: 2, name: 'Siti Rahayu', email: 'user@bizmart.id', password: 'user123', role: 'user', joined: '15 Mar 2024' },
-  { id: 3, name: 'Dzulhi Kurniawan', email: 'dzulhi@bizmart.id', password: 'dzulhi123', role: 'user', joined: '20 Apr 2024' },
-  { id: 4, name: 'Kurnia Nurhajijah', email: 'kurnia@bizmart.id', password: 'kurnia123', role: 'user', joined: '5 Mei 2024' }
+  { id: 1, name: 'Admin Bizmart', email: 'admin@bizmart.id', password: 'admin123', role: 'admin', joined: '1 Jan 2024' }
 ];
+
+// bersihkan data user lama di localStorage (sekali saja), admin tetap ada
+if (!localStorage.getItem('bm_v2')) {
+  const lama = JSON.parse(localStorage.getItem('bm_users') || '[]');
+  const admin = lama.filter(u => u.role === 'admin');
+  localStorage.setItem('bm_users', JSON.stringify(admin.length ? admin : DEMO_USERS));
+  localStorage.removeItem('bm_orders');
+  localStorage.removeItem('bm_reviews');
+  localStorage.removeItem('bm_next_order');
+  localStorage.setItem('bm_v2', '1');
+}
 
 let users = JSON.parse(localStorage.getItem('bm_users') || JSON.stringify(DEMO_USERS));
 
@@ -1366,19 +1445,12 @@ let products = JSON.parse(localStorage.getItem('bm_products') || JSON.stringify(
   { id: 10, name: 'Jamu Kunyit Asam', category: 'Makanan & Minuman', price: 15000, stock: 90, emoji: '🌿', seller: 'Jamu Tradisional', desc: 'Jamu tradisional kunyit asam, menyegarkan dan menyehatkan.', badge: '', active: true },
 ]));
 
-let orders = JSON.parse(localStorage.getItem('bm_orders') || JSON.stringify([
-  { id: 'BM-001', userId: 2, items: [{productId:1, name:'Keripik Singkong Pedas', qty:3, price:18000, emoji:'🥔'},{productId:3, name:'Sambal Matah Bali', qty:1, price:25000, emoji:'🌶️'}], total: 79000, status: 'delivered', date: '10 Apr 2025', address: 'Jl. Sudirman No.5, Malang', payment: 'Transfer Bank (BCA)' },
-  { id: 'BM-002', userId: 2, items: [{productId:5, name:'Kopi Arabika Gayo', qty:2, price:75000, emoji:'☕'}], total: 150000, status: 'shipped', date: '15 Apr 2025', address: 'Jl. Sudirman No.5, Malang', payment: 'QRIS / GoPay' },
-  { id: 'BM-003', userId: 2, items: [{productId:2, name:'Batik Tulis Madura', qty:1, price:285000, emoji:'👘'}], total: 285000, status: 'processing', date: '20 Apr 2025', address: 'Jl. Sudirman No.5, Malang', payment: 'Transfer Bank (Mandiri)' },
-]));
+let orders = JSON.parse(localStorage.getItem('bm_orders') || '[]');
 
 let cart = [];
-let nextOrderId = parseInt(localStorage.getItem('bm_next_order') || '4');
+let nextOrderId = parseInt(localStorage.getItem('bm_next_order') || '1');
 
-let reviews = JSON.parse(localStorage.getItem('bm_reviews') || JSON.stringify([
-  { id: 'RV-1', productId: 1, orderId: 'BM-001', userId: 2, userName: 'Siti Rahayu', rating: 5, comment: 'Pedasnya pas, renyah dan cepat sampai. Bakal repeat order!', date: '12 Apr 2025' },
-  { id: 'RV-2', productId: 3, orderId: 'BM-001', userId: 2, userName: 'Siti Rahayu', rating: 4, comment: 'Sambalnya enak, cuma packingnya kurang rapat jadi sedikit tumpah.', date: '12 Apr 2025' },
-]));
+let reviews = JSON.parse(localStorage.getItem('bm_reviews') || '[]');
 
 function saveData() {
   localStorage.setItem('bm_products', JSON.stringify(products));
@@ -1389,16 +1461,58 @@ function saveData() {
 }
 
 // ==================== AUTH ====================
+const emailRegex = /^[^\s@]+@[^\s@]+\.[a-z]{2,}$/i;
+let resetData = null;
+
+function showError(id, msg) {
+  document.getElementById(id).classList.add('invalid');
+  const err = document.getElementById(id + '-err');
+  err.textContent = msg;
+  err.classList.add('show');
+}
+
+function clearError(id) {
+  document.getElementById(id).classList.remove('invalid');
+  const err = document.getElementById(id + '-err');
+  err.textContent = '';
+  err.classList.remove('show');
+}
+
+// live = true saat user masih mengetik (field kosong tidak diberi peringatan)
+function checkEmail(id, live) {
+  const val = document.getElementById(id).value.trim();
+  if (live && !val) { clearError(id); return false; }
+  if (!emailRegex.test(val)) { showError(id, 'Format email tidak valid, contoh: email@gmail.com'); return false; }
+  clearError(id);
+  return true;
+}
+
+function checkPassword(id, live) {
+  const val = document.getElementById(id).value;
+  if (live && !val) { clearError(id); return false; }
+  if (val.length < 6) { showError(id, 'Password minimal 6 huruf/angka!'); return false; }
+  clearError(id);
+  return true;
+}
+
+function showAuthView(view) {
+  ['login', 'register', 'forgot', 'reset'].forEach(v => {
+    document.getElementById(v + '-form').classList.toggle('hidden', v !== view);
+  });
+  document.querySelector('.auth-tabs').classList.toggle('hidden', view === 'forgot' || view === 'reset');
+  document.querySelectorAll('.auth-tab').forEach((t, i) => t.classList.toggle('active', view === 'register' ? i === 1 : i === 0));
+  document.querySelectorAll('#auth-screen .form-input').forEach(inp => clearError(inp.id));
+}
+
 function switchAuthTab(tab) {
-  document.querySelectorAll('.auth-tab').forEach((t,i) => t.classList.toggle('active', (tab==='login'?i===0:i===1)));
-  document.getElementById('login-form').classList.toggle('hidden', tab !== 'login');
-  document.getElementById('register-form').classList.toggle('hidden', tab !== 'register');
+  showAuthView(tab);
 }
 
 function doLogin() {
-  const email = document.getElementById('login-email').value.trim();
+  const email = document.getElementById('login-email').value.trim().toLowerCase();
   const pass = document.getElementById('login-password').value;
-  const user = users.find(u => u.email === email && u.password === pass);
+  if (!checkEmail('login-email')) { showToast('Format email tidak valid!', 'error'); return; }
+  const user = users.find(u => u.email.toLowerCase() === email && u.password === pass);
   if (!user) { showToast('Email atau password salah!', 'error'); return; }
   currentUser = user;
   initApp();
@@ -1406,11 +1520,19 @@ function doLogin() {
 
 function doRegister() {
   const name = document.getElementById('reg-name').value.trim();
-  const email = document.getElementById('reg-email').value.trim();
+  const email = document.getElementById('reg-email').value.trim().toLowerCase();
   const pass = document.getElementById('reg-password').value;
-  if (!name || !email || !pass) { showToast('Lengkapi semua field!', 'error'); return; }
-  if (pass.length < 6) { showToast('Password min 6 karakter!', 'error'); return; }
-  if (users.find(u => u.email === email)) { showToast('Email sudah terdaftar!', 'error'); return; }
+
+  if (!name) showError('reg-name', 'Nama lengkap wajib diisi!'); else clearError('reg-name');
+  const emailOk = checkEmail('reg-email');
+  const passOk = checkPassword('reg-password');
+  if (!name || !emailOk || !passOk) { showToast('Periksa kembali data pendaftaran!', 'error'); return; }
+
+  if (users.find(u => u.email.toLowerCase() === email)) {
+    showError('reg-email', 'Email sudah terdaftar!');
+    showToast('Email sudah terdaftar!', 'error');
+    return;
+  }
   const newUser = { id: Date.now(), name, email, password: pass, role: 'user', joined: new Date().toLocaleDateString('id-ID', {day:'numeric',month:'short',year:'numeric'}) };
   users.push(newUser);
   currentUser = newUser;
@@ -1418,11 +1540,90 @@ function doRegister() {
   initApp();
 }
 
+// ---------- lupa & reset password ----------
+function sendResetCode(email) {
+  const code = String(Math.floor(100000 + Math.random() * 900000));
+  resetData = { email, code, expires: Date.now() + 10 * 60 * 1000, tries: 0 };
+  document.getElementById('reset-code-display').textContent = code;
+  document.getElementById('reset-email-label').textContent = email;
+}
+
+function doForgotPassword() {
+  if (!checkEmail('forgot-email')) return;
+  const email = document.getElementById('forgot-email').value.trim().toLowerCase();
+  if (!users.find(u => u.email.toLowerCase() === email)) {
+    showError('forgot-email', 'Email belum terdaftar!');
+    return;
+  }
+  sendResetCode(email);
+  ['reset-code', 'reset-password', 'reset-password2'].forEach(id => document.getElementById(id).value = '');
+  showAuthView('reset');
+  showToast('Kode reset dikirim 📧', 'success');
+}
+
+function resendResetCode() {
+  if (!resetData) { showAuthView('forgot'); return; }
+  sendResetCode(resetData.email);
+  document.getElementById('reset-code').value = '';
+  clearError('reset-code');
+  showToast('Kode reset baru dikirim 📧', 'success');
+}
+
+function doResetPassword() {
+  if (!resetData) { showAuthView('forgot'); return; }
+  const code = document.getElementById('reset-code').value.trim();
+  const pass = document.getElementById('reset-password').value;
+  const pass2 = document.getElementById('reset-password2').value;
+  let valid = true;
+
+  if (code.length !== 6) { showError('reset-code', 'Kode reset terdiri dari 6 angka!'); valid = false; } else clearError('reset-code');
+  if (!checkPassword('reset-password')) valid = false;
+  if (pass !== pass2) { showError('reset-password2', 'Konfirmasi password tidak sama!'); valid = false; } else clearError('reset-password2');
+  if (!valid) { showToast('Periksa kembali data yang diisi!', 'error'); return; }
+
+  if (Date.now() > resetData.expires) {
+    showError('reset-code', 'Kode sudah kedaluwarsa, kirim ulang kode!');
+    return;
+  }
+  if (code !== resetData.code) {
+    resetData.tries++;
+    if (resetData.tries >= 5) {
+      resetData = null;
+      showToast('Terlalu banyak percobaan, minta kode baru!', 'error');
+      showAuthView('forgot');
+      return;
+    }
+    showError('reset-code', 'Kode salah!');
+    return;
+  }
+
+  const user = users.find(u => u.email.toLowerCase() === resetData.email);
+  user.password = pass;
+  saveData();
+  document.getElementById('login-email').value = resetData.email;
+  document.getElementById('login-password').value = '';
+  resetData = null;
+  showAuthView('login');
+  showToast('Password berhasil direset, silakan masuk', 'success');
+}
+
+// password tidak bisa disalin
+function blockCopy(e) {
+  if (e.target.matches && e.target.matches('input[type="password"]')) {
+    e.preventDefault();
+    showToast('Password tidak bisa disalin!', 'error');
+  }
+}
+document.addEventListener('copy', blockCopy, true);
+document.addEventListener('cut', blockCopy, true);
+
 function doLogout() {
   currentUser = null;
   cart = [];
   document.getElementById('app').style.display = 'none';
   document.getElementById('auth-screen').style.display = 'flex';
+  document.getElementById('login-password').value = '';
+  showAuthView('login');
   showToast('Berhasil keluar 👋');
 }
 

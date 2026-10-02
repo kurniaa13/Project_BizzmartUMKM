@@ -17,7 +17,9 @@
 
 | Fitur | Deskripsi |
 |-------|-----------|
-| 🔐 Login & Register | Autentikasi pengguna dengan role Admin & User |
+| 🔐 Login & Register | Autentikasi pengguna dengan role Admin & User; register wajib email berformat valid (mis. `email@gmail.com`) dan password min. 6 karakter, peringatan tampil di form jika tidak sesuai |
+| 🔑 Lupa & Reset Password | Verifikasi email → kode reset 6 digit (berlaku 10 menit, maks. 5 percobaan) → password baru + konfirmasi |
+| 🔒 Password Anti-Salin | Semua field password memblokir copy/cut |
 | 🛍️ Smart Catalog | Katalog produk UMKM dengan filter kategori & pencarian |
 | 🛒 Keranjang Belanja | Manajemen cart real-time dengan update qty |
 | 📦 Tracking Pesanan | Pelacakan status pesanan step-by-step |
@@ -30,6 +32,14 @@
 | 📱 Responsif | Tampilan optimal di desktop, tablet, dan mobile |
 
 ### 🆕 Detail Fitur Tambahan
+
+**0. Autentikasi (diperbarui)**
+- **Akun user demo dihapus.** Satu-satunya akun bawaan adalah admin (`admin@bizmart.id`). User harus mendaftar sendiri lewat tab *Daftar*.
+- **Validasi register:** email harus berformat `nama@domain.tld` (contoh `email@gmail.com`), password minimal 6 huruf/angka (karakter bebas). Pelanggaran memunculkan peringatan merah di bawah field + toast.
+- **Lupa password:** klik *Lupa password?* → isi email terdaftar → kode reset 6 digit dibuat → isi kode + password baru + konfirmasi.
+- **Catatan:** karena aplikasi tanpa backend, pengiriman email **disimulasikan**: kode ditampilkan di layar. Untuk produksi, kirim kode lewat layanan email di server.
+- **Password tidak bisa disalin:** event copy/cut pada field password diblokir (paste tetap diperbolehkan agar kompatibel dengan password manager).
+- **Migrasi data:** saat pertama kali dibuka dengan versi ini, user lama di `localStorage` (beserta pesanan & ulasannya) dibersihkan, admin dipertahankan.
 
 **1. Riwayat & Pembatalan Pesanan (Pelanggan)**
 - Tombol "Batalkan Pesanan" tampil pada pesanan berstatus *Menunggu Konfirmasi* atau *Sedang Diproses*.
@@ -73,6 +83,11 @@ Pengujian dilakukan sesuai aspek kualitas perangkat lunak berdasarkan desain Dai
 | F-15 | Update status pesanan (Admin) | Pilih status baru pada dropdown | Status pesanan berubah | Status terupdate di database | ✅ PASS |
 | F-16 | Pencarian produk | Ketik kata kunci di search bar | Menampilkan produk yang sesuai | Filter pencarian berfungsi | ✅ PASS |
 | F-17 | Filter produk berdasarkan kategori | Klik tombol kategori | Produk difilter sesuai kategori | Hanya produk kategori terpilih yang tampil | ✅ PASS |
+| F-19 | Register dengan format email salah | Email: `kurnia` | Peringatan format email muncul, akun tidak dibuat | Peringatan tampil | ✅ PASS |
+| F-20 | Lupa password dengan email terdaftar | Email akun valid | Kode reset 6 digit ditampilkan, form reset terbuka | Berhasil | ✅ PASS |
+| F-21 | Lupa password dengan email tidak terdaftar | Email belum terdaftar | Peringatan "Email belum terdaftar" | Peringatan tampil | ✅ PASS |
+| F-22 | Reset password dengan kode benar | Kode benar + password baru ≥ 6 + konfirmasi sama | Password berubah, kembali ke login; password lama tidak bisa dipakai | Berhasil | ✅ PASS |
+| F-23 | Reset password dengan kode salah / konfirmasi beda / password pendek | Input tidak valid | Peringatan di field terkait, password tidak berubah | Peringatan tampil | ✅ PASS |
 | F-18 | Logout | Klik tombol Keluar | Kembali ke halaman login | Redirect ke auth screen | ✅ PASS |
 
 ### 2. Pengujian Keamanan (Security Testing)
@@ -83,6 +98,8 @@ Pengujian dilakukan sesuai aspek kualitas perangkat lunak berdasarkan desain Dai
 | S-02 | User biasa tidak bisa akses menu admin | Login sebagai user | Menu admin tidak muncul di navbar | Navbar hanya tampil menu user | ✅ PASS |
 | S-03 | Admin tidak bisa tambah ke keranjang | Login sebagai admin | Tombol keranjang disembunyikan | Tombol cart tidak tampil untuk admin | ✅ PASS |
 | S-04 | Registrasi dengan password pendek | Password: "abc" | Muncul error validasi | Toast "Password min 6 karakter!" | ✅ PASS |
+| S-06 | Menyalin isi field password | Ctrl+C / Ctrl+X / klik kanan salin | Aksi diblokir, muncul toast | Terblokir | ✅ PASS |
+| S-07 | Login dengan akun user demo lama | `user@bizmart.id` / `user123` | Ditolak | Email atau password salah | ✅ PASS |
 | S-05 | User hanya lihat pesanannya sendiri | Login sebagai user | Hanya pesanan userId sendiri tampil | Data pesanan terfilter per user | ✅ PASS |
 
 ### 3. Pengujian Kegunaan (Usability Testing)
